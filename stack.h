@@ -9,7 +9,9 @@ struct node {
 
 struct stack {
     struct node *ptr;
-    bool isEmpty = true;
+    bool isEmpty;
+    int size;
+    
 };
 // supporting functions
 bool push(struct stack*, char*);

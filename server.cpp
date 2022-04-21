@@ -30,9 +30,7 @@
 
 bool online = true;
 //Stack stack;
-//struct stack *stack = (struct stack*)malloc(sizeof(struct stack));
 struct stack stack;
-//pthread_t *thread_id = (pthread_t*)malloc(sizeof(pthread_t)*BACKLOG); // up to 10 clients
 pthread_t thread_id[BACKLOG];   // UP TO 10 CONNECTIONS
 int new_fd[BACKLOG];            // UP TO 10 CONNECTIONS
 tbb::mutex mutex;
@@ -95,7 +93,7 @@ void *threadfunc(void *newfd) {
             //printf("PUSHED %s sussfully\n", stack.ptr->text);
             //pthread_mutex_unlock(&mutex);
         } else if (!strcmp(buf, "TOP")) {
-            printf("the top is new %s\n", stack.ptr->text);
+            printf("the top is now %s\n", stack.ptr->text);
             if (send(new_fd, top(stack), 1024, 0) == -1)  {
                 perror("send");
             }
@@ -132,24 +130,22 @@ void sig_handler(int signum)
         online = false;
         for (size_t i = 0; i < BACKLOG; i++)
         {
-            if (send(new_fd[i], "CLOSEING", 1024, 0) == -1)  {
-                perror("send");
-            }
             close(new_fd[i]);
         }
         
-        while (!stack.isEmpty) {
-            pop(&stack);
-        }
+        //while (pop(&stack)) 
+        while (!stack.isEmpty) pop(&stack);
+        
         close(sockfd);
         printf("program terminated gracefully");
-        exit(1);
+        exit(EXIT_SUCCESS);
     }
 
 }
 int main(void)
 {
-   
+   stack.isEmpty = true;
+   stack.size = 0;
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;

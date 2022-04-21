@@ -4,9 +4,28 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+int pos = sizeof(struct node);
+
+void* _malloc (size_t size) {
+    printf("trying to malloc\n");
+    void* ptr = sbrk(pos);
+    pos += sizeof(struct node);
+    printf("we hace ptr at %p\n", ptr);
+    return ptr;
+}
+
+void _free (void* ptr) {
+    printf("trying to free\n");
+    struct node* realptr = (struct node*)ptr;
+    printf("trying to delete the content: %s \n", realptr->text);
+    sbrk(pos);
+    pos -= sizeof(struct node);
+}
+
 
 bool push(struct stack *stack, char* text) {
-    struct node *newNode = (struct node*)malloc(sizeof(struct node));
+    struct node *newNode = (struct node*)_malloc(sizeof(struct node));
     strcpy(newNode->text, text);
     if (stack->isEmpty) {
         stack->ptr = newNode;
@@ -24,7 +43,7 @@ bool pop(struct stack *stack) {
         return false;
     }
     struct node *tempNode = stack->ptr;
-    free(stack->ptr);
+    _free(stack->ptr);
     if (tempNode->prev == NULL) {
         stack->isEmpty = true;
         stack->ptr = NULL;
@@ -43,3 +62,16 @@ char* top(struct stack stack) {
     }
     return stack.ptr->text;
 }
+
+// int main() {
+//     struct stack stack;
+//     push(&stack, "1");
+//     printf("%s\n", top(stack));
+//     push(&stack, "2");
+//     printf("%s\n", top(stack));
+//     push(&stack, "3");
+//     printf("%s\n", top(stack));
+//     pop(&stack);
+//     printf("%s\n", top(stack));
+//     wipe(stack);
+// }
