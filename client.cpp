@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
             string line;
             getline(cin, line);
             char* c = const_cast<char*>(line.c_str());
-            cout << c << endl;
             
             if (send(sockfd, c, 1024, 0) == -1)  {
                 perror("send");

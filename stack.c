@@ -5,23 +5,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-int pos = sizeof(struct node);
+int pos = sizeof(struct node); // initial position for the most bottom value in the stack
 
 void* _malloc (size_t size) {
-    printf("trying to malloc\n");
     void* ptr = sbrk(pos);
     pos += sizeof(struct node);
-    printf("we hace ptr at %p\n", ptr);
     return ptr;
 }
 
 void _free (void* ptr) {
-    printf("trying to free\n");
-    struct node* realptr = (struct node*)ptr;
-    printf("trying to delete the content: %s \n", realptr->text);
     sbrk(pos);
     pos -= sizeof(struct node);
 }
+
 
 
 bool push(struct stack *stack, char* text) {

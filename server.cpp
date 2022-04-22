@@ -78,7 +78,7 @@ void *threadfunc(void *newfd) {
         *(buf+numbytes) = '\0';
          
         if (!strcmp(buf, "PUSH")) {
-            tbb::mutex::scoped_lock lock(mutex);
+            tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
             //pthread_mutex_lock(&mutex);
             numbytes = recv(new_fd, buf, sizeof(buf), 0);
             if (numbytes <=0) {
@@ -86,21 +86,16 @@ void *threadfunc(void *newfd) {
                 connected = false;
                 break;
             }
-           
-            printf("DEBUG: Pushing %s\n", buf);
-            //stack.push(buf);
             push(&stack, buf);
-            //printf("PUSHED %s sussfully\n", stack.ptr->text);
             //pthread_mutex_unlock(&mutex);
         } else if (!strcmp(buf, "TOP")) {
-            printf("the top is now %s\n", stack.ptr->text);
             if (send(new_fd, top(stack), 1024, 0) == -1)  {
                 perror("send");
             }
            
         } else if (!strcmp(buf, "POP")) {
-            tbb::mutex::scoped_lock lock(mutex);
-            //pthread_mutex_lock(&mutex);
+            tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
+            //pthread_mutex_lock(&mutex); 
             if (pop(&stack)) {
                 if (send(new_fd, "DEBUG: popped succeeded", 1024, 0) == -1)  {
                     perror("send");
@@ -115,11 +110,8 @@ void *threadfunc(void *newfd) {
         }
         
    }
-    //  pthread_mutex_unlock(&mutex);
     printf("closed a client socket\n");
     close(new_fd);
-    //pthread_exit(NULL);	
-    //return newfd;
 }
 
 void sig_handler(int signum)
@@ -133,7 +125,6 @@ void sig_handler(int signum)
             close(new_fd[i]);
         }
         
-        //while (pop(&stack)) 
         while (!stack.isEmpty) pop(&stack);
         
         close(sockfd);
