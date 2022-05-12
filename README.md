@@ -1,4 +1,4 @@
-# OS-Ex4
+# OS-Ex5
 ## HOW TO RUN << READ THIS!! 
 <br>
 <br>
@@ -12,7 +12,3 @@ PUSH -text- <br>
 POP <br>
 TOP <br>
 EXIT <br>
-
-#### TESTS
-we used test.c to test our stack implementation. <br>
-run 'make test' and './test' inorder to run the tests. <br>

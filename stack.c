@@ -5,23 +5,32 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-int pos = sizeof(struct node); // initial position for the most bottom value in the stack
 
-void* _malloc (size_t size) {
-    void* ptr = sbrk(pos);
-    pos += sizeof(struct node);
-    return ptr;
+#include <sys/mman.h>
+
+char* memory_init(struct stack* stack) {
+     
+    char *initialptr = (char*)mmap(NULL, sizeof(struct node)*10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    if ((void*)-1 == initialptr) {
+        printf("error could not map memory");
+        exit(1);
+    }
+    stack->curraddr = initialptr;
+    printf("initial ptr: %p\n", initialptr);
+    return initialptr;
+}
+void* _malloc (size_t size, struct stack* stack) {
+    stack->curraddr += sizeof(struct node);
+    return stack->curraddr;
 }
 
-void _free (void* ptr) {
-    sbrk(pos);
-    pos -= sizeof(struct node);
+void _free (void* ptr, struct stack* stack) {
+    stack->curraddr -= sizeof(struct node);
+   // return stack->curraddr;
 }
-
-
 
 bool push(struct stack *stack, char* text) {
-    struct node *newNode = (struct node*)_malloc(sizeof(struct node));
+    struct node *newNode = (struct node*)_malloc(sizeof(struct node), stack);
     strcpy(newNode->text, text);
     if (stack->isEmpty) {
         stack->ptr = newNode;
@@ -30,7 +39,7 @@ bool push(struct stack *stack, char* text) {
         newNode->prev = stack->ptr;
         stack->ptr = newNode;
     }
-    
+    stack->size++;
     return true;
 }
 
@@ -39,7 +48,7 @@ bool pop(struct stack *stack) {
         return false;
     }
     struct node *tempNode = stack->ptr;
-    _free(stack->ptr);
+    _free(stack->ptr, stack);
     if (tempNode->prev == NULL) {
         stack->isEmpty = true;
         stack->ptr = NULL;
@@ -47,7 +56,7 @@ bool pop(struct stack *stack) {
     }
     tempNode->prev->next = NULL;
     stack->ptr = stack->ptr->prev;
-    
+    stack->size--;
 
     return true;
 }

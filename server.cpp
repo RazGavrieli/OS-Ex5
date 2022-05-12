@@ -14,8 +14,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include <pthread.h> // threads
-#include <tbb/mutex.h>
+#include <sys/mman.h>
+
+//#include <tbb/mutex.h>
 
 #include "stack.h"
 #include <vector>
@@ -25,15 +26,12 @@
 #define PORT "3491"  // the port users will be connecting to
 
 #define BACKLOG 10   // how many pending connections queue will hold
-#include <tbb/mutex.h>
 
 
 bool online = true;
-//Stack stack;
-struct stack stack;
-pthread_t thread_id[BACKLOG];   // UP TO 10 CONNECTIONS
+struct stack *stack;
 int new_fd[BACKLOG];            // UP TO 10 CONNECTIONS
-tbb::mutex mutex;
+//tbb::mutex mutex;
 int sockfd;  // listen on sock_fd, new connection on new_fd
 
 
@@ -63,7 +61,6 @@ void *threadfunc(void *newfd) {
     */
     
     int new_fd = *(int*)newfd; 
-    pthread_detach(pthread_self());
     int numbytes;  
     char buf[1024];
     bool connected = true;
@@ -78,7 +75,7 @@ void *threadfunc(void *newfd) {
         *(buf+numbytes) = '\0';
          
         if (!strcmp(buf, "PUSH")) {
-            tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
+            //tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
             //pthread_mutex_lock(&mutex);
             numbytes = recv(new_fd, buf, sizeof(buf), 0);
             if (numbytes <=0) {
@@ -86,17 +83,18 @@ void *threadfunc(void *newfd) {
                 connected = false;
                 break;
             }
-            push(&stack, buf);
+            push(stack, buf);
             //pthread_mutex_unlock(&mutex);
         } else if (!strcmp(buf, "TOP")) {
-            if (send(new_fd, top(stack), 1024, 0) == -1)  {
+            printf("TOP IS AT: %p\n", stack->curraddr);
+            if (send(new_fd, top(*stack), 1024, 0) == -1)  {
                 perror("send");
             }
            
         } else if (!strcmp(buf, "POP")) {
-            tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
+            //tbb::mutex::scoped_lock lock(mutex); /* We implemented mutex using TBB's implementation of scoped lock */
             //pthread_mutex_lock(&mutex); 
-            if (pop(&stack)) {
+            if (pop(stack)) {
                 if (send(new_fd, "DEBUG: popped succeeded", 1024, 0) == -1)  {
                     perror("send");
                 }
@@ -125,7 +123,7 @@ void sig_handler(int signum)
             close(new_fd[i]);
         }
         
-        while (!stack.isEmpty) pop(&stack);
+        while (!stack->isEmpty) pop(stack);
         
         close(sockfd);
         printf("program terminated gracefully");
@@ -135,8 +133,11 @@ void sig_handler(int signum)
 }
 int main(void)
 {
-   stack.isEmpty = true;
-   stack.size = 0;
+    stack = (struct stack*)mmap(NULL, sizeof(struct stack), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    stack->isEmpty = true;
+    stack->size = 0;
+    memory_init(stack);
+
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
@@ -201,11 +202,14 @@ int main(void)
             continue;
         }
 
-        inet_ntop(their_addr.ss_family,
-        get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+        inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
         printf("server: got connection from %s\n", s);
-        
-        pthread_create(&thread_id[j%BACKLOG], NULL, threadfunc, &new_fd[j]);
+
+        if (fork()==0) {
+            close(sockfd); // child doesnt need it
+            threadfunc(&new_fd[j]);
+            return 1;
+        }
         j++;
     }
 

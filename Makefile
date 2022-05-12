@@ -22,7 +22,7 @@ clientC: client.cpp
 	$(CXX) $^ -o client
 
 server: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -ltbb $^ -o server
+	$(CXX) $(CXXFLAGS) $^ -o server
 
 stack: stack.c
 	$(CC) stack.c stack.h -c 
