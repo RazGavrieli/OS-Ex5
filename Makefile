@@ -31,4 +31,4 @@ valgrind: server
 	valgrind $(VALGRIND_FLAGS) ./server
 
 clean:
-	rm -f *.o main server ser cli a.out client original stack.h.gch tests test
+	rm -f *.o main server ser cli a.out client original stack.h.gch tests test locker.txt

@@ -19,3 +19,4 @@ char* top(struct stack);
 bool pop (struct stack*);
 
 char* memory_init(struct stack*);
+int open_new_file();

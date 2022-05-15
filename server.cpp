@@ -23,7 +23,7 @@
 #include <iostream>
 
 
-#define PORT "3491"  // the port users will be connecting to
+#define PORT "3490"  // the port users will be connecting to
 
 #define BACKLOG 10   // how many pending connections queue will hold
 
@@ -133,6 +133,7 @@ void sig_handler(int signum)
 }
 int main(void)
 {
+    int fd = open_new_file();
     stack = (struct stack*)mmap(NULL, sizeof(struct stack), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     stack->isEmpty = true;
     stack->size = 0;
@@ -212,6 +213,6 @@ int main(void)
         }
         j++;
     }
-
+    close(fd);
     return 0;
 }

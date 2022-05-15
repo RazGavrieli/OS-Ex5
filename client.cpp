@@ -19,7 +19,7 @@
 using namespace std;
 
 
-#define PORT "3491" // the port client will be connecting to 
+#define PORT "3490" // the port client will be connecting to 
 
 #define MAXDATASIZE 1024 // max number of bytes we can get at once 
 
