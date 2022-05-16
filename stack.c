@@ -92,14 +92,12 @@ bool pop(struct stack *stack) {
     return true;
 }
 char* top(struct stack stack) {
-    locker.l_type = F_WRLCK;
-    fcntl(fd, F_SETLKW, &locker);
+  
     if (!stack.ptr) {
         char* emptyStack = "stack is empty!";
         return emptyStack;
     }
-    locker.l_type = F_UNLCK;
-    fcntl (fd, F_SETLKW, &locker);
+
     return stack.ptr->text;
 }
 
