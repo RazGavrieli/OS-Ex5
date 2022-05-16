@@ -17,7 +17,7 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_OF_NODES 1000 //how many nodes you can push to the stack
+#define NUM_OF_NODES 1000 // how many nodes you can push to the stack
 int fd;
 struct flock locker; // we will use this to synchronize the operation of the processes
 
@@ -26,7 +26,7 @@ int open_new_file()
     fd = open("locker.txt", O_WRONLY | O_CREAT); 
     // O_WRONLY - open for writing only
     //O_CREAT - If the file exists, this flag has no effect
-    if (fd == -1)//The file didn't opened successfuly
+    if (fd == -1) //The file didn't opened successfuly
     {
         printf("Error");
         
@@ -35,6 +35,9 @@ int open_new_file()
    return fd;
 }
 char* memory_init(struct stack* stack) {
+    /**
+     * @brief On stack initialization call this function with a pointer to the stack. 
+     */
     char *initialptr = (char*)mmap(NULL, sizeof(struct node)*NUM_OF_NODES, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if ((void*)-1 == initialptr) {
         printf("error could not map memory");
@@ -45,13 +48,18 @@ char* memory_init(struct stack* stack) {
     return initialptr;
 }
 void* _malloc (size_t size, struct stack* stack) {
+    /**
+     * @brief Increment the current pointer address one node to the right
+     */
     stack->curraddr += sizeof(struct node);
     return stack->curraddr;
 }
 
 void _free (void* ptr, struct stack* stack) {
+    /**
+     * @brief Increment the current pointer address one node to the left
+     */
     stack->curraddr -= sizeof(struct node);
-   // return stack->curraddr;
 }
 
 bool push(struct stack *stack, char* text) {
@@ -112,7 +120,7 @@ char* top(struct stack stack) {
     fcntl (fd, F_SETLKW, &locker);
     return stack.ptr->text;
 }
-
+// main function used for internal testing
 // int main() {
 //     struct stack stack;
 //     push(&stack, "1");
