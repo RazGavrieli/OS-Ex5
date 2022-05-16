@@ -19,7 +19,7 @@
 using namespace std;
 
 
-#define PORT "3492" // the port client will be connecting to 
+#define PORT "3457" // the port client will be connecting to 
 
 #define MAXDATASIZE 1024 // max number of bytes we can get at once 
 
@@ -105,6 +105,7 @@ int main(int argc, char *argv[])
             if (send(sockfd, c, 1024, 0) == -1)  {
                 perror("send");
             }
+    
         } else if (command == "POP") {
             /*
                 Here we send to the server 'POP' to command it to pop the stack. 

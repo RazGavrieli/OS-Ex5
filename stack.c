@@ -17,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 
+#define NUM_OF_NODES 1000 //how many nodes you can push to the stack
 int fd;
 struct flock locker; // we will use this to synchronize the operation of the processes
 
@@ -34,7 +35,7 @@ int open_new_file()
    return fd;
 }
 char* memory_init(struct stack* stack) {
-    char *initialptr = (char*)mmap(NULL, sizeof(struct node)*10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    char *initialptr = (char*)mmap(NULL, sizeof(struct node)*NUM_OF_NODES, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if ((void*)-1 == initialptr) {
         printf("error could not map memory");
         exit(1);
@@ -55,20 +56,29 @@ void _free (void* ptr, struct stack* stack) {
 
 bool push(struct stack *stack, char* text) {
     locker.l_type = F_WRLCK;    //write lock
-    fcntl(fd, F_SETLKW, &locker); //the f_setlkw request waits until the specified range becomes free and the request can be completed
-    struct node *newNode = (struct node*)_malloc(sizeof(struct node), stack);
-    strcpy(newNode->text, text);
-    if (stack->isEmpty) {
-        stack->ptr = newNode;
-        stack->isEmpty = false;
-    } else {
-        newNode->prev = stack->ptr;
-        stack->ptr = newNode;
-    }
-    stack->size++;
+    fcntl(fd, F_SETLKW, &locker);
+     //the f_setlkw request waits until the specified range becomes free and the request can be completed
+    if (stack->size <= NUM_OF_NODES)
+    {
+    
+        struct node *newNode = (struct node*)_malloc(sizeof(struct node), stack);
+        strcpy(newNode->text, text);
+        if (stack->isEmpty) {
+            stack->ptr = newNode;
+            stack->isEmpty = false;
+        } else {
+            newNode->prev = stack->ptr;
+            stack->ptr = newNode;
+        }
+        stack->size++;
+        locker.l_type = F_UNLCK;
+        fcntl(fd, F_SETLKW, &locker);
+        return true;
+    }else{
     locker.l_type = F_UNLCK;
     fcntl(fd, F_SETLKW, &locker);
-    return true;
+    return false;
+    }
 }
 
 bool pop(struct stack *stack) {
@@ -92,12 +102,14 @@ bool pop(struct stack *stack) {
     return true;
 }
 char* top(struct stack stack) {
-  
+    locker.l_type = F_WRLCK;
+    fcntl(fd, F_SETLKW, &locker);
     if (!stack.ptr) {
         char* emptyStack = "stack is empty!";
         return emptyStack;
     }
-
+    locker.l_type = F_UNLCK;
+    fcntl (fd, F_SETLKW, &locker);
     return stack.ptr->text;
 }
 

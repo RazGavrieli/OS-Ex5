@@ -23,7 +23,7 @@
 #include <iostream>
 
 
-#define PORT "3492"  // the port users will be connecting to
+#define PORT "3457"  // the port users will be connecting to
 
 #define BACKLOG 10   // how many pending connections queue will hold
 
@@ -83,8 +83,11 @@ void *threadfunc(void *newfd) {
                 connected = false;
                 break;
             }
-            push(stack, buf);
-            //pthread_mutex_unlock(&mutex);
+            if(push(stack, buf)==false)
+            {
+                printf("STACK IS FULL!\n");
+            }
+                    //pthread_mutex_unlock(&mutex);
         } else if (!strcmp(buf, "TOP")) {
             printf("TOP IS AT: %p\n", stack->curraddr);
             if (send(new_fd, top(*stack), 1024, 0) == -1)  {
